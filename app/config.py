@@ -1,0 +1,16 @@
+SECRET_KEY="SECRET_KEY"
+#数据库
+HOSTNAME = "127.0.0.1"
+PORT = "3306"
+DATABASE = "security"
+USERNAME = "security"
+PASSWORD = "security"
+SQLALCHEMY_DATABASE_URI =f"mysql+pymysql://{USERNAME}:{PASSWORD}@{HOSTNAME}:{PORT}/{DATABASE}?charset=utf8"
+
+#邮箱
+MAIL_SERVER= 'smtp.qq.com'
+MAIL_PORT = 465
+MAIL_USE_SSL = True
+MAIL_USERNAME = '2546046421@qq.com'
+MAIL_PASSWORD = 'elfpjbikjjsadjii'
+MAIL_DEFAULT_SENDER = '2546046421@qq.com'

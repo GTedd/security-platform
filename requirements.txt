@@ -1,0 +1,11 @@
+flask
+flask_SQLAlchemy
+flask_migrate
+pymysql
+flask_mail
+wtforms
+email_validator
+python-nmap
+xmltodict
+dirsearch
+setuptools

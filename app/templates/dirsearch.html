@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Directory Search</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        #results {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+            background-color: #1e1e1e;
+            font-family: monospace;
+            color: #ffffff;
+        }
+        .timestamp {
+            color: #87ceeb;  /* 天蓝色 */
+        }
+        .progress-info {
+            color: #4a9eff;  /* 蓝色 */
+        }
+        .progress-bar {
+            color: #00ff00;  /* 绿色 */
+        }
+        .progress-percent {
+            color: #ffd700;  /* 金色 */
+        }
+        .size {
+            color: #dda0dd;  /* 淡紫色 */
+        }
+        .path {
+            color: #98fb98;  /* 淡绿色 */
+        }
+        .status-200 {
+            color: #00ff00;  /* 绿色 */
+        }
+        .status-301 {
+            color: #ffa500;  /* 橙色 */
+        }
+        .status-302 {
+            color: #ffa500;  /* 橙色 */
+        }
+        .status-403 {
+            color: #ff6600;  /* 深橙色 */
+        }
+        .status-404 {
+            color: #888888;  /* 灰色 */
+        }
+        .status-500 {
+            color: #ff0000;  /* 红色 */
+        }
+        .error-info {
+            color: #ff4444;  /* 红色 */
+        }
+        .warning-info {
+            color: #ffff00;  /* 黄色 */
+        }
+        .normal-info {
+            color: #ffffff;  /* 白色 */
+        }
+        .complete-info {
+            color: #00ffff;  /* 青色 */
+            font-weight: bold;
+        }
+        .start-info {
+            color: #00ff00;  /* 绿色 */
+            font-weight: bold;
+        }
+        #searchForm {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            padding: 8px;
+            width: 300px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .filter-controls {
+            margin: 10px 0;
+            padding: 10px;
+            background: #2a2a2a;
+            border-radius: 5px;
+        }
+        .filter-controls label {
+            margin-right: 15px;
+            color: #fff;
+        }
+        .filter-controls input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .filter-button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .filter-button:hover {
+            background-color: #45a049;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h2>Directory Search</h2>
+    <form id="searchForm" method="GET">
+        <input type="text" name="target_url" placeholder="Enter target URL" required>
+        <button type="submit">Start Scan</button>
+    </form>
+
+    <div class="filter-controls">
+        <label><input type="checkbox" class="status-filter" value="200" checked> 200 OK</label>
+        <label><input type="checkbox" class="status-filter" value="301" checked> 301 Redirect</label>
+        <label><input type="checkbox" class="status-filter" value="302" checked> 302 Redirect</label>
+        <label><input type="checkbox" class="status-filter" value="403" checked> 403 Forbidden</label>
+        <label><input type="checkbox" class="status-filter" value="404" checked> 404 Not Found</label>
+        <label><input type="checkbox" class="status-filter" value="500" checked> 500 Error</label>
+        <label><input type="checkbox" id="showProgress" checked> Show Progress</label>
+        <button id="clearResults" class="filter-button">Clear Results</button>
+        <button id="exportResults" class="filter-button">Export Results</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        function formatLine(line) {
+            // 处理时间戳和状态码行
+            const timestampPattern = /\[([\d:]+)\]\s+(\d{3})\s+-\s+(\d+[B])\s+-\s+(.+)/;
+            const timestampMatch = line.match(timestampPattern);
+            if (timestampMatch) {
+                const [_, time, status, size, path] = timestampMatch;
+                return `<span class='timestamp'>[${time}]</span> ` +
+                       `<span class='status-${status}'>${status}</span> - ` +
+                       `<span class='size'>${size}</span> - ` +
+                       `<span class='path'>${path}</span>`;
+            }
+
+            // 处理进度条行
+            const progressPattern = /(.*errors:\d+)(\[#+\s*\])\s+(\d+%)\s+(\d+\/\d+)\s+(\d+\/s)\s+(job:\d+\/\d+)/;
+            const progressMatch = line.match(progressPattern);
+            if (progressMatch) {
+                const [_, info, bar, percent, count, speed, job] = progressMatch;
+                return `<span class='progress-info'>` +
+                       `${info} ` +
+                       `<span class='progress-bar'>${bar}</span> ` +
+                       `<span class='progress-percent'>${percent}</span> ` +
+                       `${count} ${speed} ${job}` +
+                       `</span>`;
+            }
+
+            // 其他类型的输出
+            if (line.includes('Task Completed')) {
+                return `<span class='complete-info'>${line}</span>`;
+            } else if (line.includes('Starting:')) {
+                return `<span class='start-info'>${line}</span>`;
+            } else if (line.toLowerCase().includes('error')) {
+                return `<span class='error-info'>${line}</span>`;
+            } else if (line.includes('WARNING')) {
+                return `<span class='warning-info'>${line}</span>`;
+            } else {
+                return `<span class='normal-info'>${line}</span>`;
+            }
+        }
+
+        // 存储所有结果的数组
+        let allResults = [];
+
+        // 过滤和显示结果
+        function filterAndDisplayResults() {
+            const showProgress = $('#showProgress').is(':checked');
+            const enabledStatuses = $('.status-filter:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            $('#results').empty();
+            allResults.forEach(result => {
+                // 检查是否是进度信息
+                if (result.includes('progress-info')) {
+                    if (showProgress) {
+                        $('#results').append(result + '<br>');
+                    }
+                } else {
+                    // 检查状态码
+                    let shouldShow = false;
+                    enabledStatuses.forEach(status => {
+                        if (result.includes(`status-${status}`)) {
+                            shouldShow = true;
+                        }
+                    });
+                    if (shouldShow) {
+                        $('#results').append(result + '<br>');
+                    }
+                }
+            });
+
+            // 滚动到底部
+            $('#results').scrollTop($('#results')[0].scrollHeight);
+        }
+
+        // 导出结果
+        function exportResults() {
+            const enabledStatuses = $('.status-filter:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            let exportText = '';
+            allResults.forEach(result => {
+                // 移除HTML标签，只保留纯文本
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = result;
+                const plainText = tempDiv.textContent || tempDiv.innerText;
+
+                let shouldExport = false;
+                enabledStatuses.forEach(status => {
+                    if (result.includes(`status-${status}`)) {
+                        shouldExport = true;
+                    }
+                });
+
+                if (shouldExport) {
+                    exportText += plainText + '\n';
+                }
+            });
+
+            // 创建下载链接
+            const blob = new Blob([exportText], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dirsearch_results.txt';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        $(document).ready(function() {
+            let lastProgress = null;
+
+            // 清除结果按钮
+            $('#clearResults').click(function() {
+                $('#results').empty();
+                allResults = [];
+            });
+
+            // 导出结果按钮
+            $('#exportResults').click(exportResults);
+
+            // 过滤器改变时重新显示结果
+            $('.status-filter, #showProgress').change(filterAndDisplayResults);
+
+            $('#searchForm').on('submit', function(e) {
+                e.preventDefault();
+                const targetUrl = $('input[name="target_url"]').val();
+                $('#results').empty();
+                allResults = [];
+                
+                const eventSource = new EventSource(`/dirsearch/?target_url=${encodeURIComponent(targetUrl)}`);
+                
+                eventSource.onmessage = function(event) {
+                    const line = event.data;
+                    const formattedLine = formatLine(line);
+                    
+                    // 存储格式化后的结果
+                    if (formattedLine.includes('progress-info')) {
+                        if (formattedLine !== lastProgress) {
+                            lastProgress = formattedLine;
+                            allResults = allResults.filter(r => !r.includes('progress-info'));
+                            allResults.push(formattedLine);
+                        }
+                    } else {
+                        allResults.push(formattedLine);
+                    }
+                    
+                    // 应用过滤器并显示
+                    filterAndDisplayResults();
+                };
+                
+                eventSource.onerror = function() {
+                    eventSource.close();
+                };
+            });
+        });
+    </script>
+</body>
+</html>

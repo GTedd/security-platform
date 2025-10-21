@@ -1,0 +1,14 @@
+.content {
+    font-style: italic;
+    font-weight: bolder;
+    font-size: 70px;
+    line-height: 1.5;
+    font-family: "LiSu", serif;
+    text-align: center;
+    
+    width: 700px;
+    height: 100px;
+    padding: 20px;
+    margin: 30px;
+    border: 20px outset #ff0000;
+}

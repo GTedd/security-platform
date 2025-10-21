@@ -1,0 +1,30 @@
+<html>
+    <head>
+    </head>
+    <body>
+        <h1>Nmap</h1>
+        <form action="/nmap" method="POST">
+            <label for="ip">扫描的 IP:</label> 
+            <input type="text" id="ip" name="ip" required>
+
+            <label for="mode">扫描模式:</label>
+            <select id="mode" name="mode" required>
+                <option value="found">主机发现</option>
+                <option value="lite">快速扫描</option>
+                <option value="default">默认扫描</option>
+                <option value="full">全面扫描</option>
+            </select><br>
+
+            <button type="submit">提交</button>
+        </form>
+        <div id="loadingMessage" style="display: none; color: #666; margin-top: 10px;">
+            扫描时间较久，请耐心等候...
+        </div>
+
+        <script>
+            document.getElementById('scanForm').addEventListener('submit', function() {
+                document.getElementById('loadingMessage').style.display = 'block';
+            });
+        </script>
+    </body>
+</html>

@@ -1,0 +1,16 @@
+<html>
+    <head>
+        <title>netdiscover</title>
+    </head>
+    <body>
+        <h1>netdiscover</h1>
+        <form action="/netdiscover" method="POST" id="scanForm">
+            <label for="time">扫描时间 (秒):</label>
+            <input type="number" id="time" name="time" value="3" min="1" required>
+
+            <label for="range">扫描范围:</label>
+            <input type="text" id="range" name="range" value="192.168.1.0/24" required>
+            <button type="submit">开始扫描</button>
+        </form>
+    </body>
+</html>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Login</title>
+</head>
+<body>
+<h1>Login</h1>
+<h2>登入</h2>
+<form method="post" action="{{ url_for('login.login', next=request.args.get('next')) }}">
+    <label for="邮箱">邮箱:</label> 
+    <input type="text" id="email" name="email" required><br>
+    
+    <label for="username">密码:</label> 
+    <input type="password" name="password" id="password" required><br>
+    <button>登入</button>
+</form>
+</body>
+</html>
